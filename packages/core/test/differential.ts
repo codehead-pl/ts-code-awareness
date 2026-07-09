@@ -5,7 +5,7 @@
 // symbols, edges, entrypoints, fragments; volatile timestamps/timings excluded).
 // This is the reusable oracle incremental invalidation is validated
 // against — incremental == full-rebuild reduces to `diffStores(...).equal`.
-import { Store, buildInto, incrementalRefresh, indexPackage, canonicalJson, diffStores, registerAdapter } from "../src/index.ts";
+import { Store, buildInto, buildSkeleton, incrementalRefresh, indexPackage, canonicalJson, diffStores, registerAdapter } from "../src/index.ts";
 import { nestAdapter } from "../../adapter-nest/src/index.ts";
 import { prismaAdapter } from "../../adapter-prisma/src/index.ts";
 import { tmpdir } from "node:os";
@@ -153,6 +153,39 @@ battery("prisma-edit", (dir) =>
   check("[reembed] one-line body edit re-embeds exactly one chunk", embedded === 1);
   s.close();
   purge(dir, dbp, `${dbp}-wal`, `${dbp}-shm`);
+}
+
+// === engine-version invalidation: an upgraded engine rebuilds stale caches ===
+// A persisted map produced by older adapter/build code must be fully rebuilt on
+// reopen — not incrementally reused — even when no project files changed. This
+// is the fix for "upgrading the plugin doesn't rebuild an already-cached map".
+console.log("\n=== engine-version cache invalidation ===");
+{
+  const dbp = scratch("engine-version.db");
+  const s = new Store(dbp);
+  buildSkeleton(s, FIXTURE);
+
+  // Baseline: unchanged tree + current engine version → a genuine noop.
+  check("[engine-version] unchanged tree at current version is a noop", incrementalRefresh(s, FIXTURE).mode === "noop");
+
+  // Simulate a map written by an older engine build: the version stamp differs.
+  s.setMeta("engineVersion", "0.0.0-stale");
+  check("[engine-version] a stale stamp forces a full rebuild despite zero file changes", incrementalRefresh(s, FIXTURE).mode === "full");
+
+  // A pre-stamp map (empty/absent engineVersion) also rebuilds — the fix
+  // self-heals on the first upgrade that introduces the stamp.
+  s.setMeta("engineVersion", "");
+  check("[engine-version] an absent/empty stamp also rebuilds", incrementalRefresh(s, FIXTURE).mode === "full");
+
+  // And the forced rebuild produced correct output: identical to a fresh build.
+  const freshDb = scratch("engine-version-fresh.db");
+  const fresh = new Store(freshDb);
+  buildSkeleton(fresh, FIXTURE);
+  check("[engine-version] the rebuilt store == a fresh from-scratch build", diffStores(s, fresh).equal === true);
+
+  s.close();
+  fresh.close();
+  purge(dbp, `${dbp}-wal`, `${dbp}-shm`, freshDb, `${freshDb}-wal`, `${freshDb}-shm`);
 }
 
 console.log(failures === 0 ? "\nPASS — differential harness green (deterministic + incremental == full)" : `\nFAIL — ${failures} check(s) failed`);

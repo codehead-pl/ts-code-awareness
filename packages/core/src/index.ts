@@ -1,6 +1,6 @@
 export { Store } from "./store.ts";
 export type { FindOpts, PackageRecord } from "./store.ts";
-export { buildInto, buildSkeleton, hydratePackage, createProject, refresh, incrementalRefresh } from "./build.ts";
+export { buildInto, buildSkeleton, hydratePackage, createProject, refresh, incrementalRefresh, ENGINE_VERSION } from "./build.ts";
 export type { BuildResult, SymbolIndex, IncrementalResult } from "./build.ts";
 export { buildStructural, buildCalls, nameResolver } from "./graph.ts";
 export { registerAdapter, registeredAdapters } from "./adapter.ts";

@@ -34,6 +34,21 @@ import { indexPackage, defaultEmbedder, type Embedder } from "./semantic.ts";
 
 const pkgOf = (fid: string): string => fid.slice(0, fid.indexOf("|"));
 
+/** The engine's own version, read from `@codehead-pl/tsca-core`'s package.json
+ *  (resolves from both `src` in dev and the bundled `dist` in prod — npm always
+ *  ships package.json at the package root). Every release moves the workspace in
+ *  lockstep, so this is a faithful engine-wide identity: a persisted map stamped
+ *  with a different value was produced by different adapter/build code and must
+ *  be fully rebuilt, not incrementally reused. */
+export const ENGINE_VERSION: string = ((): string => {
+  try {
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version?: string };
+    return pkg.version ?? "0";
+  } catch {
+    return "0";
+  }
+})();
+
 export interface BuildResult {
   files: number;
   symbols: number;
@@ -177,6 +192,7 @@ export function buildSkeleton(store: Store, projectRootInput: string): BuildResu
 
   store.setMeta("builtAt", new Date().toISOString());
   store.setMeta("projectRoot", projectRoot);
+  store.setMeta("engineVersion", ENGINE_VERSION);
   store.setMeta("schemaVersion", "0");
   store.setMeta("workspaceTool", ws.tool);
   store.setMeta("hydrated", "[]");
@@ -374,9 +390,14 @@ export function incrementalRefresh(
   });
 
   const prev = store.fileHashes();
-  const fresh = prev.size > 0 && store.getMeta("projectRoot") === projectRoot;
+  // A persisted map is reusable only if it targets this root AND was produced by
+  // this engine version — an upgraded daemon must fully rebuild caches its old
+  // code wrote (their adapter/derived output may differ), not incrementally
+  // reuse them. A pre-stamp map (engineVersion meta absent) also fails this and
+  // rebuilds, so the fix self-heals on the first upgrade that introduces it.
+  const fresh = prev.size > 0 && store.getMeta("projectRoot") === projectRoot && store.getMeta("engineVersion") === ENGINE_VERSION;
   if (!fresh) {
-    const r = buildSkeleton(store, projectRoot); // sets auxHashes baseline
+    const r = buildSkeleton(store, projectRoot); // sets auxHashes + engineVersion baseline
     return empty("full", r.ms);
   }
 

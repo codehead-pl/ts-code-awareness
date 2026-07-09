@@ -2,7 +2,7 @@
 // individual sessions. Each request carries X-Project-Root; the daemon routes
 // to that project's warm map (building on first use).
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { registerAdapter, registeredAdapters, warmDefaultEmbedder } from "@codehead-pl/tsca-core";
+import { registerAdapter, registeredAdapters, warmDefaultEmbedder, ENGINE_VERSION } from "@codehead-pl/tsca-core";
 import { nestAdapter } from "@codehead-pl/tsca-adapter-nest";
 import { prismaAdapter } from "@codehead-pl/tsca-adapter-prisma";
 import { liveTools } from "@codehead-pl/tsca-live-data";
@@ -104,6 +104,7 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/health") {
       return json(res, 200, {
         ok: true,
+        version: ENGINE_VERSION,
         coreTools: Object.keys(CORE_TOOLS),
         adapterTools: TOOLS_BY_ADAPTER,
         projects: pm.status(),
@@ -119,7 +120,7 @@ const server = createServer(async (req, res) => {
         return json(res, 400, { error: "missing X-Project-Root header" });
       }
       const project = pm.get(root);
-      return json(res, 200, { tools: manifestFor(project), adapters: project.adapters });
+      return json(res, 200, { version: ENGINE_VERSION, tools: manifestFor(project), adapters: project.adapters });
     }
 
     if (req.method === "POST" && req.url === "/rpc") {
