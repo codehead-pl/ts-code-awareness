@@ -1,8 +1,19 @@
 {
-  "name": "@tsca/live-data",
+  "name": "@codehead-pl/tsca-live-data",
   "version": "0.1.0",
   "type": "module",
   "description": "Optional, config-gated live-data tools. Opens the engine's own read-only DB connection (never boots the target app); SELECT-only guard + caps + timeout. Never mutates the target DB.",
+  "author": "Michał Tomczuk",
+  "license": "MIT",
+  "homepage": "https://github.com/codehead-pl/ts-code-awareness#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codehead-pl/ts-code-awareness.git",
+    "directory": "packages/live-data"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -11,19 +22,24 @@
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup"
   },
   "dependencies": {
-    "@tsca/core": "workspace:*"
+    "@codehead-pl/tsca-core": "workspace:*"
   },
   "optionalDependencies": {
     "pg": "^8.13.1",
     "mysql2": "^3.11.5"
   },
   "devDependencies": {
-    "@tsca/adapter-prisma": "workspace:*"
+    "@codehead-pl/tsca-adapter-prisma": "workspace:*"
   },
-  "license": "MIT",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

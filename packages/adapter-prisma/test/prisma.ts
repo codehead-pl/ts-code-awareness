@@ -1,7 +1,7 @@
 // Acceptance: build the fixture
 // with the Prisma adapter active and assert the ER model + the model↔code bridge
 // (db_model_usage recall/confidence), $queryRaw capture, and static migrations.
-import { Store, buildSkeleton, registerAdapter } from "@tsca/core";
+import { Store, buildSkeleton, registerAdapter } from "@codehead-pl/tsca-core";
 import { prismaAdapter } from "../src/index.ts";
 import * as t from "../src/tools.ts";
 import { tmpdir } from "node:os";

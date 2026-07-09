@@ -1,8 +1,8 @@
 // Category-A tools: thin, compact projections over the store. Reverse queries
 // carry a coverage envelope.
 import type { Project } from "./projects.ts";
-import type { EdgeKind, EdgeRecord, SymbolRecord, Store } from "@tsca/core";
-import { search as semanticSearch, searchSimilar as semanticSimilar, indexPackage } from "@tsca/core";
+import type { EdgeKind, EdgeRecord, SymbolRecord, Store } from "@codehead-pl/tsca-core";
+import { search as semanticSearch, searchSimilar as semanticSimilar, indexPackage } from "@codehead-pl/tsca-core";
 
 export interface ToolArgs {
   name?: string;

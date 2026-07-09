@@ -3,9 +3,9 @@
 // finds the analogous handler, and incremental re-embed is hash-gated (re-index =
 // 0 embeds; a one-line body edit re-embeds exactly one chunk). Lives under
 // adapter-nest/test so both adapters contribute code + schema chunks.
-import { Store, buildSkeleton, registerAdapter, indexPackage, search, searchSimilar, HashingEmbedder, loadOnnxEmbedder, type Embedder, type OnnxEmbedder } from "@tsca/core";
+import { Store, buildSkeleton, registerAdapter, indexPackage, search, searchSimilar, HashingEmbedder, loadOnnxEmbedder, type Embedder, type OnnxEmbedder } from "@codehead-pl/tsca-core";
 import { nestAdapter } from "../src/index.ts";
-import { prismaAdapter } from "@tsca/adapter-prisma";
+import { prismaAdapter } from "@codehead-pl/tsca-adapter-prisma";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cpSync, readFileSync, writeFileSync, rmSync } from "node:fs";

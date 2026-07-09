@@ -9,7 +9,7 @@
 import { Node, SyntaxKind, type ClassDeclaration, type Expression, type SourceFile } from "ts-morph";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import type { AdapterContext, FragmentNodeRecord, Span } from "@tsca/core";
+import type { AdapterContext, FragmentNodeRecord, Span } from "@codehead-pl/tsca-core";
 import { parseSchema, type ParsedSchema, type PrismaModel } from "./schema.ts";
 
 const READ_OPS = new Set(["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany", "count", "aggregate", "groupBy"]);

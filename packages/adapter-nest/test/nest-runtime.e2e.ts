@@ -30,7 +30,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, join } from "node:path";
 import { tmpdir } from "node:os";
-import { Store, buildSkeleton, registerAdapter } from "@tsca/core";
+import { Store, buildSkeleton, registerAdapter } from "@codehead-pl/tsca-core";
 import { nestAdapter } from "../src/index.ts";
 import * as t from "../src/tools.ts";
 

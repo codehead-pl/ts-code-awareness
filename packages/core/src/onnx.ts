@@ -18,19 +18,56 @@
 //     platform, e.g. darwin-x64). We (a) redirect that import to an empty stub
 //     via an ESM loader hook, and (b) inject `onnxruntime-web` (WASM) as the
 //     runtime through the `Symbol.for("onnxruntime")` global that transformers
-//     honors. The paired pnpm patch teaches transformers' backend selector that
-//     the injected runtime supports the `wasm` device.
+//     honors. transformers' backend selector must also be taught that the
+//     injected runtime supports the `wasm` device — `ensureTransformersWasmPatch`
+//     does that at load time (see its note on why a runtime patch, not a
+//     package-manager one).
 //
 // If transformers.js / onnxruntime-web can't be loaded, `loadOnnxEmbedder`
 // rejects and callers fall back to `HashingEmbedder`.
 import { Worker } from "node:worker_threads";
 import { createRequire } from "node:module";
+import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Embedder } from "./semantic.ts";
 import { setDefaultEmbedder } from "./semantic.ts";
 
 const require = createRequire(import.meta.url);
+
+/** Teach transformers.js's ONNX backend selector that the injected
+ *  onnxruntime-web (WASM) runtime supports the `wasm` device. Without this,
+ *  transformers takes the `Symbol.for("onnxruntime")` inject branch but never
+ *  registers `wasm` as a usable device, and model load fails.
+ *
+ *  This repo applies the same two lines via a pnpm patch for local dev, but
+ *  pnpm patches never reach npm / npx consumers of `@codehead-pl/tsca-*` — so we
+ *  also apply them at runtime, in place, on the on-disk build that the worker is
+ *  about to `import()`. Idempotent (skips if already patched) and best-effort (a
+ *  read-only install just leaves it unpatched and semantic search degrades to the
+ *  hashing embedder). Mirrors patches/@huggingface__transformers@4.2.0.patch. */
+function ensureTransformersWasmPatch(esmPath: string): void {
+  const anchor = "ONNX = globalThis[ORT_SYMBOL];";
+  const inject = '\n  supportedDevices.push("wasm");\n  defaultDevices = ["wasm"];';
+  // The worker imports the `.mjs`; patch the sibling `.cjs` too for consistency.
+  for (const file of [esmPath, esmPath.replace(/\.mjs$/, ".cjs")]) {
+    let src: string;
+    try {
+      src = readFileSync(file, "utf8");
+    } catch {
+      continue; // this build variant isn't present
+    }
+    if (src.includes('supportedDevices.push("wasm")')) continue; // already patched
+    const i = src.indexOf(anchor);
+    if (i === -1) continue; // upstream shape changed — leave it, search degrades
+    const at = i + anchor.length;
+    try {
+      writeFileSync(file, src.slice(0, at) + inject + src.slice(at));
+    } catch {
+      /* read-only install: leave unpatched, caller falls back to HashingEmbedder */
+    }
+  }
+}
 
 // SharedArrayBuffer control layout (Int32 slots).
 const REQ = 0; // main → worker: a request is pending
@@ -147,7 +184,9 @@ export class OnnxEmbedder implements Embedder {
     const wasmDir = pathToFileURL(join(dirname(ortEntry), "/")).href;
     // require.resolve gives the CJS entry; the ESM build lives beside it.
     const tfEntry = require.resolve("@huggingface/transformers");
-    const transformersUrl = pathToFileURL(join(dirname(tfEntry), "transformers.node.mjs")).href;
+    const tfEsm = join(dirname(tfEntry), "transformers.node.mjs");
+    ensureTransformersWasmPatch(tfEsm);
+    const transformersUrl = pathToFileURL(tfEsm).href;
 
     const syncSab = new SharedArrayBuffer(4 * Int32Array.BYTES_PER_ELEMENT);
     const textSab = new SharedArrayBuffer(TEXT_CAP);

@@ -34,7 +34,7 @@ appear only when a DB connection is configured (see
 repo's own TypeScript. To point at the golden fixture instead:
 
 ```sh
-# daemon must be up (the hook starts it; or: pnpm --filter @tsca/daemon start)
+# daemon must be up (the hook starts it; or: pnpm --filter @codehead-pl/tsca-daemon start)
 pnpm exec tsx packages/mcp-server/test/client.ts "$PWD/fixtures/nest-monorepo"
 ```
 

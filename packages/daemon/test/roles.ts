@@ -2,9 +2,9 @@
 // adapter role facets built from the fragmentsBySymbol join, gated on active
 // adapters. Verify a symbol that is BOTH a route handler and a prisma:access
 // caller carries route + dbAccess; a plain symbol carries none.
-import { Store, buildSkeleton, hydratePackage, registerAdapter } from "@tsca/core";
-import { nestAdapter } from "@tsca/adapter-nest";
-import { prismaAdapter } from "@tsca/adapter-prisma";
+import { Store, buildSkeleton, hydratePackage, registerAdapter } from "@codehead-pl/tsca-core";
+import { nestAdapter } from "@codehead-pl/tsca-adapter-nest";
+import { prismaAdapter } from "@codehead-pl/tsca-adapter-prisma";
 import { explain_symbol } from "../src/tools.ts";
 import type { Project } from "../src/projects.ts";
 import { tmpdir } from "node:os";

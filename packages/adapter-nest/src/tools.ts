@@ -1,6 +1,6 @@
 // nest_* tools. Thin, compact projections over the
 // nest:* fragments built at skeleton time. No checker at query time.
-import type { Store, FragmentNodeRecord } from "@tsca/core";
+import type { Store, FragmentNodeRecord } from "@codehead-pl/tsca-core";
 
 type Args = Record<string, unknown>;
 const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);

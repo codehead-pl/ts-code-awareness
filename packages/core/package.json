@@ -1,8 +1,19 @@
 {
-  "name": "@tsca/core",
+  "name": "@codehead-pl/tsca-core",
   "version": "0.1.0",
   "type": "module",
   "description": "Engine core: TS program walk, base map, SQLite store.",
+  "author": "Michał Tomczuk",
+  "license": "MIT",
+  "homepage": "https://github.com/codehead-pl/ts-code-awareness#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codehead-pl/ts-code-awareness.git",
+    "directory": "packages/core"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -11,6 +22,10 @@
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup"
   },
@@ -19,6 +34,7 @@
     "onnxruntime-web": "^1.27.0",
     "ts-morph": "^24.0.0"
   },
-  "license": "MIT",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

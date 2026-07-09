@@ -3,7 +3,7 @@ import type { Options } from "tsup";
 // Shared tsup preset for every workspace package. esbuild bundles each package's
 // own `./x.ts` relative imports into a single dist/index.js — which is what lets
 // the source keep its `.ts` import specifiers untouched (esbuild rewrites them on
-// emit; tsc/tsx never see a change). Declared dependencies (ts-morph, @tsca/*,
+// emit; tsc/tsx never see a change). Declared dependencies (ts-morph, @codehead-pl/tsca-*,
 // the MCP SDK, zod) stay external and resolve at runtime via each package's own
 // `exports` map, so cross-package imports hit the compiled dist in production.
 export const preset: Options = {

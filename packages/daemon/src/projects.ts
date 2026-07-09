@@ -1,8 +1,8 @@
 // Per-project map manager with an LRU cap.
 // One daemon serves every project; each project's map is kept warm in memory
 // (here: an open SQLite handle) up to the cap, evicting least-recently-used.
-import { Store, buildSkeleton, hydratePackage, incrementalRefresh } from "@tsca/core";
-import { loadLiveConfig, createDriver, type Driver, type LiveConfig } from "@tsca/live-data";
+import { Store, buildSkeleton, hydratePackage, incrementalRefresh } from "@codehead-pl/tsca-core";
+import { loadLiveConfig, createDriver, type Driver, type LiveConfig } from "@codehead-pl/tsca-live-data";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";

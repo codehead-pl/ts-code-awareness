@@ -5,7 +5,7 @@
 //   2. runDbSuite — driven against a live database per engine: drift, row caps +
 //      truncation, data_query mutation rejection, count/sample/explain, and —
 //      on pg/mysql — a *fired* statement timeout on a deliberately slow SELECT.
-import type { Store } from "@tsca/core";
+import type { Store } from "@codehead-pl/tsca-core";
 import { guardSelectOnly, liveTools, type Driver, type LiveConfig } from "../src/index.ts";
 
 export type Check = (label: string, cond: boolean) => void;

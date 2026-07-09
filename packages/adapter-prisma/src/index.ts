@@ -3,7 +3,7 @@
 // category-C db_* tool surface (tools.ts).
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { Adapter, AdapterTool } from "@tsca/core";
+import type { Adapter, AdapterTool } from "@codehead-pl/tsca-core";
 import { build } from "./build.ts";
 import * as t from "./tools.ts";
 

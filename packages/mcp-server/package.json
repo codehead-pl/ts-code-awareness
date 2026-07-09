@@ -1,12 +1,27 @@
 {
-  "name": "@tsca/mcp-server",
+  "name": "@codehead-pl/tsca-mcp-server",
   "version": "0.1.0",
   "type": "module",
   "description": "Stdio MCP shim Claude Code spawns per session; forwards tool calls to the daemon with X-Project-Root = cwd.",
+  "author": "Michał Tomczuk",
+  "license": "MIT",
+  "homepage": "https://github.com/codehead-pl/ts-code-awareness#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codehead-pl/ts-code-awareness.git",
+    "directory": "packages/mcp-server"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
   "main": "./dist/index.js",
   "bin": {
+    "tsca-mcp-server": "./dist/index.js",
     "tsca-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup"
   },
@@ -14,6 +29,7 @@
     "@modelcontextprotocol/sdk": "^1.12.0",
     "zod": "^3.23.8"
   },
-  "license": "MIT",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

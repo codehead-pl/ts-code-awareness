@@ -1,7 +1,7 @@
 // Acceptance: the engine ships as
 // compiled JS, not tsx-only. This smoke starts the daemon from the COMPILED dist
 // output — `node packages/daemon/dist/index.js`, plain node, no tsx, and no
-// `development` export condition — so every `@tsca/*` import resolves to that
+// `development` export condition — so every `@codehead-pl/tsca-*` import resolves to that
 // package's dist/index.js (production `default` condition). It then drives real
 // tool calls end-to-end over HTTP against the monorepo fixture: a core tool
 // (overview) and an adapter tool (nest_routes), proving the compiled adapters

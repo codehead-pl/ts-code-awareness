@@ -2,7 +2,7 @@
 // runs an engine-generated SELECT over a validated table or passes user SQL
 // through guardSelectOnly first. `data_explain --analyze` is the sole "may
 // execute" relaxation and is config-gated + still SELECT-only.
-import type { Store } from "@tsca/core";
+import type { Store } from "@codehead-pl/tsca-core";
 import type { Driver } from "./drivers.ts";
 import type { LiveConfig } from "./config.ts";
 import { guardSelectOnly } from "./guard.ts";

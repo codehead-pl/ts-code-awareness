@@ -108,7 +108,7 @@ pnpm test:semantic   # semantic search
 pnpm test:live       # live-data guard + drivers (spins up throwaway DBs)
 
 # run the daemon, then curl it
-pnpm --filter @tsca/daemon start
+pnpm --filter @codehead-pl/tsca-daemon start
 curl -s localhost:47600/health
 
 # drive the MCP shim the way Claude Code does

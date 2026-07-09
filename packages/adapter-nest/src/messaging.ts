@@ -24,7 +24,7 @@ import {
   type ParameterDeclaration,
   type SourceFile,
 } from "ts-morph";
-import type { AdapterContext, FragmentNodeRecord } from "@tsca/core";
+import type { AdapterContext, FragmentNodeRecord } from "@codehead-pl/tsca-core";
 import {
   buildImportMap,
   firstStringArg,

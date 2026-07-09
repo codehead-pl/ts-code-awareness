@@ -1,7 +1,7 @@
 // The Nest adapter: self-activating on `@nestjs/core`/`@nestjs/common` in a
 // package's deps. Contributes nest:* fragments (build.ts) and the category-B
 // tool surface (tools.ts). The daemon registers it; core stays framework-blind.
-import type { Adapter, AdapterTool } from "@tsca/core";
+import type { Adapter, AdapterTool } from "@codehead-pl/tsca-core";
 import { build } from "./build.ts";
 import * as t from "./tools.ts";
 

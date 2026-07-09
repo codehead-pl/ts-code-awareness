@@ -1,8 +1,19 @@
 {
-  "name": "@tsca/adapter-prisma",
+  "name": "@codehead-pl/tsca-adapter-prisma",
   "version": "0.1.0",
   "type": "module",
   "description": "Prisma adapter: schema.prisma → models/relations/enums, the model↔code access bridge, and static migration reports, contributed as prisma:* fragments.",
+  "author": "Michał Tomczuk",
+  "license": "MIT",
+  "homepage": "https://github.com/codehead-pl/ts-code-awareness#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codehead-pl/ts-code-awareness.git",
+    "directory": "packages/adapter-prisma"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -11,13 +22,18 @@
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup"
   },
   "dependencies": {
-    "@tsca/core": "workspace:*",
+    "@codehead-pl/tsca-core": "workspace:*",
     "ts-morph": "^24.0.0"
   },
-  "license": "MIT",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

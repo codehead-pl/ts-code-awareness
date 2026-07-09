@@ -4,7 +4,7 @@
 // boot Nest. The booted-runtime oracle that validates nest_pipeline_for against
 // a real instantiated app lives in nest-runtime.e2e.ts (`pnpm test:nest:runtime`).
 // Exits non-zero on any regression.
-import { Store, buildSkeleton, registerAdapter } from "@tsca/core";
+import { Store, buildSkeleton, registerAdapter } from "@codehead-pl/tsca-core";
 import { nestAdapter } from "../src/index.ts";
 import * as t from "../src/tools.ts";
 import { tmpdir } from "node:os";

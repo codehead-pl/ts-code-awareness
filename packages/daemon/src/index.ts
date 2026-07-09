@@ -2,10 +2,10 @@
 // individual sessions. Each request carries X-Project-Root; the daemon routes
 // to that project's warm map (building on first use).
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { registerAdapter, registeredAdapters, warmDefaultEmbedder } from "@tsca/core";
-import { nestAdapter } from "@tsca/adapter-nest";
-import { prismaAdapter } from "@tsca/adapter-prisma";
-import { liveTools } from "@tsca/live-data";
+import { registerAdapter, registeredAdapters, warmDefaultEmbedder } from "@codehead-pl/tsca-core";
+import { nestAdapter } from "@codehead-pl/tsca-adapter-nest";
+import { prismaAdapter } from "@codehead-pl/tsca-adapter-prisma";
+import { liveTools } from "@codehead-pl/tsca-live-data";
 import { ProjectManager } from "./projects.ts";
 import * as tools from "./tools.ts";
 import type { ToolArgs } from "./tools.ts";

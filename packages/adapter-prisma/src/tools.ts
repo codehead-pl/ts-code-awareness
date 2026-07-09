@@ -1,6 +1,6 @@
 // db_* tools. Compact projections over the prisma:*
 // fragments. The model↔code bridge (db_model_usage) is the headline join.
-import type { Store } from "@tsca/core";
+import type { Store } from "@codehead-pl/tsca-core";
 
 type Args = Record<string, unknown>;
 const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);

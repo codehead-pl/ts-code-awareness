@@ -21,21 +21,21 @@ importers:
 
   packages/adapter-nest:
     specifiers:
-      '@tsca/adapter-prisma': workspace:*
-      '@tsca/core': workspace:*
+      '@codehead-pl/tsca-adapter-prisma': workspace:*
+      '@codehead-pl/tsca-core': workspace:*
       ts-morph: ^24.0.0
     dependencies:
-      '@tsca/core': link:../core
+      '@codehead-pl/tsca-core': link:../core
       ts-morph: 24.0.0
     devDependencies:
-      '@tsca/adapter-prisma': link:../adapter-prisma
+      '@codehead-pl/tsca-adapter-prisma': link:../adapter-prisma
 
   packages/adapter-prisma:
     specifiers:
-      '@tsca/core': workspace:*
+      '@codehead-pl/tsca-core': workspace:*
       ts-morph: ^24.0.0
     dependencies:
-      '@tsca/core': link:../core
+      '@codehead-pl/tsca-core': link:../core
       ts-morph: 24.0.0
 
   packages/core:
@@ -50,29 +50,29 @@ importers:
 
   packages/daemon:
     specifiers:
-      '@tsca/adapter-nest': workspace:*
-      '@tsca/adapter-prisma': workspace:*
-      '@tsca/core': workspace:*
-      '@tsca/live-data': workspace:*
+      '@codehead-pl/tsca-adapter-nest': workspace:*
+      '@codehead-pl/tsca-adapter-prisma': workspace:*
+      '@codehead-pl/tsca-core': workspace:*
+      '@codehead-pl/tsca-live-data': workspace:*
     dependencies:
-      '@tsca/adapter-nest': link:../adapter-nest
-      '@tsca/adapter-prisma': link:../adapter-prisma
-      '@tsca/core': link:../core
-      '@tsca/live-data': link:../live-data
+      '@codehead-pl/tsca-adapter-nest': link:../adapter-nest
+      '@codehead-pl/tsca-adapter-prisma': link:../adapter-prisma
+      '@codehead-pl/tsca-core': link:../core
+      '@codehead-pl/tsca-live-data': link:../live-data
 
   packages/live-data:
     specifiers:
-      '@tsca/adapter-prisma': workspace:*
-      '@tsca/core': workspace:*
+      '@codehead-pl/tsca-adapter-prisma': workspace:*
+      '@codehead-pl/tsca-core': workspace:*
       mysql2: ^3.11.5
       pg: ^8.13.1
     dependencies:
-      '@tsca/core': link:../core
+      '@codehead-pl/tsca-core': link:../core
     optionalDependencies:
       mysql2: 3.22.6
       pg: 8.22.0
     devDependencies:
-      '@tsca/adapter-prisma': link:../adapter-prisma
+      '@codehead-pl/tsca-adapter-prisma': link:../adapter-prisma
 
   packages/mcp-server:
     specifiers:
