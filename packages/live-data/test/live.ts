@@ -16,7 +16,7 @@ import { join } from "node:path";
 import { rmSync } from "node:fs";
 import { Store, buildSkeleton, registerAdapter } from "@codehead-pl/tsca-core";
 import { prismaAdapter } from "@codehead-pl/tsca-adapter-prisma";
-import { SqliteDriver, PgDriver, MysqlDriver, type Driver, type LiveConfig } from "../src/index.ts";
+import { SqliteDriver, PgDriver, MysqlDriver, liveTools, type Driver, type LiveConfig } from "../src/index.ts";
 import { guardRedTeam, runDbSuite, type Check } from "./suite.ts";
 import { seedSqlite } from "./seed/sqlite.ts";
 import { seedPg } from "./seed/pg.ts";
@@ -71,6 +71,29 @@ buildSkeleton(store, "fixtures/nest-monorepo"); // populates prisma:model fragme
 // ---- 1. guard red-team (once) --------------------------------------------
 console.log("\n== guard red-team (engine-independent) ==");
 guardRedTeam(check);
+
+// ---- 1b. drift whitelists Prisma's bookkeeping table (engine-independent) --
+// A fully-migrated DB carries `_prisma_migrations`, which is never in the
+// schema. It must not count as drift (it used to make `data_tables` report
+// `drift.clean: false` on an otherwise-clean database).
+console.log("\n== drift: _prisma_migrations whitelist (engine-independent) ==");
+{
+  const stubDriver = {
+    kind: "postgres",
+    async tables() {
+      return [
+        { name: "users", columns: [{ name: "id" }, { name: "email" }, { name: "name" }, { name: "role" }] },
+        { name: "_prisma_migrations", columns: [{ name: "id" }, { name: "checksum" }] },
+      ];
+    },
+  } as unknown as Driver;
+  const cfg: LiveConfig = { driver: "postgres", url: "", allowAnalyze: false, rowCap: 2, statementTimeoutMs: 5000, schema: "public" };
+  const r = (await liveTools.data_tables(store, stubDriver, cfg, {})) as any;
+  check("_prisma_migrations excluded from tablesInDbNotInSchema", !r.drift.tablesInDbNotInSchema.map((t: string) => t.toLowerCase()).includes("_prisma_migrations"));
+  // Post has no live table in this stub, so it still shows as schema-only drift —
+  // but the DB side is clean (only users + the whitelisted bookkeeping table).
+  check("no spurious DB-side drift from the bookkeeping table", r.drift.tablesInDbNotInSchema.length === 0);
+}
 
 // ---- 2a. SQLite (reference) ----------------------------------------------
 console.log("\n== engine: sqlite ==");

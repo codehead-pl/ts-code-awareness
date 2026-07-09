@@ -13,6 +13,7 @@
     "test:nest": "tsx --conditions=development packages/adapter-nest/test/nest.ts",
     "test:nest:runtime": "cd fixtures/nest-monorepo/packages/api && tsx --conditions=development ../../../../packages/adapter-nest/test/nest-runtime.e2e.ts",
     "test:prisma": "tsx --conditions=development packages/adapter-prisma/test/prisma.ts",
+    "test:prisma:split": "tsx --conditions=development packages/adapter-prisma/test/prisma-split.ts",
     "test:semantic": "tsx --conditions=development packages/adapter-nest/test/semantic.ts",
     "test:live": "tsx --conditions=development packages/live-data/test/live.ts",
     "test:diff": "tsx --conditions=development packages/core/test/differential.ts",

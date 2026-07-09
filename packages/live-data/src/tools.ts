@@ -41,7 +41,12 @@ export async function data_tables(store: Store, driver: Driver, config: LiveConf
     schemaTables.set(String(m.attrs.table).toLowerCase(), { model: String(m.attrs.name), columns });
   }
 
-  const tablesNotInSchema = tables.filter((t) => !schemaTables.has(t.name.toLowerCase())).map((t) => t.name);
+  // Prisma's own migration-bookkeeping table lives in the DB but never in the
+  // schema — exclude it so a fully-migrated database reads as clean.
+  const IGNORED_TABLES = new Set(["_prisma_migrations"]);
+  const tablesNotInSchema = tables
+    .filter((t) => !schemaTables.has(t.name.toLowerCase()) && !IGNORED_TABLES.has(t.name.toLowerCase()))
+    .map((t) => t.name);
   const tablesNotInDb = [...schemaTables.entries()].filter(([t]) => !liveByName.has(t)).map(([, v]) => v.model);
   const columnDrift: Array<{ table: string; inDbNotSchema: string[]; inSchemaNotDb: string[] }> = [];
   for (const [tname, s] of schemaTables) {

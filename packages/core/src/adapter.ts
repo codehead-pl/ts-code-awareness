@@ -33,7 +33,10 @@ export type AdapterTool = (store: Store, args: Record<string, unknown>, ctx?: { 
 export interface Adapter {
   name: string; // "nest"
   fingerprintGlobs: string[]; // files that invalidate this adapter's fragment
-  detect(pkg: WorkspacePackage): boolean; // e.g. @nestjs/core in deps
+  /** True if this adapter should build for `pkg`. `ws` is passed so an adapter
+   *  can consult the dependency closure — e.g. Prisma activating on a consumer
+   *  package that only reaches `@prisma/client`/the schema transitively. */
+  detect(pkg: WorkspacePackage, ws: Workspace): boolean;
   build(ctx: AdapterContext): void; // contribute fragment nodes for ctx.pkg
   tools: Record<string, AdapterTool>; // name → handler
   /** Optional per-tool sub-detection gate: tool name → a store meta key that

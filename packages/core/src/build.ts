@@ -237,7 +237,7 @@ function runAdapters(
   if (!adapters.length) return;
   for (const pkg of ws.packages) {
     for (const adapter of adapters) {
-      if (!adapter.detect(pkg)) continue;
+      if (!adapter.detect(pkg, ws)) continue;
       active.add(adapter.name);
       const ctx = makeAdapterContext(project, store, index, ws, projectRoot, pkg);
       timer.time(`adapter:${adapter.name}`, pkg.name, () => adapter.build(ctx));
@@ -438,10 +438,18 @@ export function incrementalRefresh(
     for (const fid of [...added, ...changed, ...deleted]) noteRel(fid);
     for (const fid of auxChanged) noteRel(fid);
 
+    // A package's adapter fragments can also depend on aux inputs (schema /
+    // migrations) owned by a package in its dependency closure — e.g. Prisma's
+    // consumer packages read the schema-owner's schema.prisma. So a dep's aux
+    // change must also re-run the dependent's adapter.
+    const auxRelsByPkg = new Map<string, string[]>();
+    for (const fid of auxChanged) getOrInit(auxRelsByPkg, pkgOf(fid), () => []).push(fid.slice(fid.indexOf("|") + 1));
+
     for (const pkg of ws.packages) {
       for (const adapter of registeredAdapters()) {
-        if (!adapter.detect(pkg)) continue;
-        const rels = changedByPkg.get(pkg.name) ?? [];
+        if (!adapter.detect(pkg, ws)) continue;
+        const rels = [...(changedByPkg.get(pkg.name) ?? [])];
+        for (const dep of closureOf(ws, pkg.name)) if (dep !== pkg.name) rels.push(...(auxRelsByPkg.get(dep) ?? []));
         const run = affectedPkgs.has(pkg.name) || rels.some((rel) => matchesAny(rel, adapter.fingerprintGlobs));
         if (!run) continue;
         store.deleteFragmentsForPackage(adapter.name, pkg.name);

@@ -7,21 +7,142 @@
 //      op; confidence is `typed` when the receiver's type reaches PrismaClient,
 //      else `heuristic`. Plus $queryRaw capture and a static migration report.
 import { Node, SyntaxKind, type ClassDeclaration, type Expression, type SourceFile } from "ts-morph";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative, sep } from "node:path";
-import type { AdapterContext, FragmentNodeRecord, Span } from "@codehead-pl/tsca-core";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { dirname, join, relative, sep } from "node:path";
+import type { AdapterContext, FragmentNodeRecord, Span, Workspace } from "@codehead-pl/tsca-core";
 import { parseSchema, type ParsedSchema, type PrismaModel } from "./schema.ts";
 
 const READ_OPS = new Set(["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany", "count", "aggregate", "groupBy"]);
 const WRITE_OPS = new Set(["create", "createMany", "createManyAndReturn", "update", "updateMany", "upsert", "delete", "deleteMany"]);
-const RAW_TAGS: Record<string, "queryRaw" | "executeRaw"> = { $queryRaw: "queryRaw", $executeRaw: "executeRaw" };
-const RAW_CALLS: Record<string, "queryRaw" | "executeRaw"> = { $queryRawUnsafe: "queryRaw", $executeRawUnsafe: "executeRaw" };
+// Maps, not plain objects: a plain-object lookup like `RAW_CALLS["toLocaleString"]`
+// would resolve to `Object.prototype.toLocaleString` (and `toString`, `valueOf`,
+// `constructor`, `hasOwnProperty`, …) — a truthy inherited function — and falsely
+// capture those ordinary call sites as raw queries.
+const RAW_TAGS = new Map<string, "queryRaw" | "executeRaw">([
+  ["$queryRaw", "queryRaw"],
+  ["$executeRaw", "executeRaw"],
+]);
+const RAW_CALLS = new Map<string, "queryRaw" | "executeRaw">([
+  ["$queryRawUnsafe", "queryRaw"],
+  ["$executeRawUnsafe", "executeRaw"],
+]);
+
+/** Transitive workspace-dependency closure of a package (incl. itself). */
+export function packageClosure(ws: Workspace, pkg: string): Set<string> {
+  const byName = new Map(ws.packages.map((p) => [p.name, p]));
+  const out = new Set<string>();
+  const stack = [pkg];
+  while (stack.length) {
+    const n = stack.pop()!;
+    if (out.has(n)) continue;
+    out.add(n);
+    for (const d of byName.get(n)?.workspaceDeps ?? []) stack.push(d);
+  }
+  return out;
+}
+
+const pkgOfFid = (fid: string): string => fid.slice(0, fid.indexOf("|"));
 
 export function build(ctx: AdapterContext): void {
-  const schemaFiles = findSchemas(ctx.pkg.root);
-  if (!schemaFiles.length) return;
+  const byName = new Map(ctx.workspace.packages.map((p) => [p.name, p]));
+  const closure = packageClosure(ctx.workspace, ctx.pkg.name);
 
-  // ---- parse + merge all schema files ----------------------------------
+  // Schema files reachable from this package: its own, plus those owned by any
+  // package in its workspace-dependency closure. In a split monorepo the schema
+  // lives in a `db`/`shared` package while the client is consumed elsewhere, so
+  // a consumer must reach the schema through the closure to recognize its calls.
+  const closureSchemaFiles: string[] = [];
+  for (const name of closure) {
+    const p = byName.get(name);
+    if (p) for (const s of findSchemas(p.root)) closureSchemaFiles.push(s);
+  }
+  if (!closureSchemaFiles.length) return;
+
+  const parsed: ParsedSchema = { models: [], enums: [] };
+  for (const abs of closureSchemaFiles) {
+    const p = parseSchema(readFileSync(abs, "utf8"));
+    parsed.models.push(...p.models);
+    parsed.enums.push(...p.enums);
+  }
+  const modelNames = new Set(parsed.models.map((m) => m.name));
+
+  // delegate (camelCase) -> model, for call-site recognition
+  const delegateToModel = new Map<string, PrismaModel>();
+  for (const m of parsed.models) delegateToModel.set(lowerFirst(m.name), m);
+
+  // ---- schema-owned fragments (models / enums / migrations) ------------
+  // Only the package that physically holds the schema emits these, so consumer
+  // packages that reach the schema through the closure don't duplicate them.
+  if (findSchemas(ctx.pkg.root).length) emitSchema(ctx, modelNames);
+
+  // ---- model↔code bridge (prisma:access + prisma:raw) ------------------
+  // Recognized in THIS package's own sources (fragments carry file provenance,
+  // so each package owns the access/raw nodes for its own call sites). The
+  // PrismaClient-heritage fixpoint is computed across the closure so a
+  // `PrismaService extends PrismaClient` defined in the schema package still
+  // types receivers in the consumer packages.
+  const closureFiles = ctx.project.getSourceFiles().filter((sf) => {
+    const fid = ctx.fileIdOf(sf);
+    return !!fid && closure.has(pkgOfFid(fid));
+  });
+  const clientTypes = clientTypeSet(closureFiles);
+  const files = closureFiles.filter((sf) => ctx.inPackage(sf));
+  let accessSeq = 0;
+  let rawSeq = 0;
+
+  for (const sf of files) {
+    const fid = ctx.fileIdOf(sf);
+    sf.forEachDescendant((node) => {
+      // raw queries: tagged template `this.prisma.$queryRaw`...`` or *Unsafe(sql)
+      if (Node.isTaggedTemplateExpression(node)) {
+        const tag = node.getTag();
+        const tagKind = Node.isPropertyAccessExpression(tag) ? RAW_TAGS.get(tag.getName()) : undefined;
+        if (tagKind) emitRaw(ctx, node, tagKind, node.getTemplate().getText(), rawSeq++, fid);
+        return;
+      }
+      if (!Node.isCallExpression(node)) return;
+      const expr = node.getExpression();
+      if (!Node.isPropertyAccessExpression(expr)) return;
+      const op = expr.getName();
+
+      const rawKind = RAW_CALLS.get(op);
+      if (rawKind) {
+        const arg = node.getArguments()[0];
+        emitRaw(ctx, node, rawKind, arg ? arg.getText() : "", rawSeq++, fid);
+        return;
+      }
+      if (!READ_OPS.has(op) && !WRITE_OPS.has(op)) return;
+      const delegateAccess = expr.getExpression();
+      if (!Node.isPropertyAccessExpression(delegateAccess)) return;
+      const model = delegateToModel.get(delegateAccess.getName());
+      if (!model) return;
+
+      const clientRecv = delegateAccess.getExpression();
+      const cls = node.getFirstAncestorByKind(SyntaxKind.ClassDeclaration);
+      const confidence = confidenceOf(clientRecv, cls, clientTypes);
+      const rw = READ_OPS.has(op) ? "read" : "write";
+      const fields = argFields(node.getArguments()[0], new Set(model.fields.map((f) => f.name)));
+      const caller = enclosingCallable(ctx, node);
+      const refs: FragmentNodeRecord["refs"] = {};
+      if (caller) refs.caller = caller;
+
+      ctx.store.upsertFragment({
+        id: `prisma:access:${caller ?? fid ?? "?"}#${accessSeq++}`,
+        adapter: "prisma",
+        kind: "access",
+        attrs: { model: model.name, modelNode: `prisma:model:${model.name}`, op, rw, fields, confidence },
+        refs,
+        span: spanOf(node),
+        provenance: fid ? [fid] : [],
+      });
+    });
+  }
+}
+
+/** Emit the schema-owned fragments (model / enum / migration) for the package
+ *  that physically holds the schema files at `ctx.pkg.root`. */
+function emitSchema(ctx: AdapterContext, closureModelNames: Set<string>): void {
+  const schemaFiles = findSchemas(ctx.pkg.root);
   const parsed: ParsedSchema = { models: [], enums: [] };
   let newestSchemaMtime = 0;
   const schemaProvenance: string[] = [];
@@ -32,12 +153,8 @@ export function build(ctx: AdapterContext): void {
     newestSchemaMtime = Math.max(newestSchemaMtime, safeMtime(abs));
     schemaProvenance.push(synthId(ctx.pkg.name, ctx.pkg.root, abs));
   }
-  const modelNames = new Set(parsed.models.map((m) => m.name));
-  const clientStale = computeClientStale(ctx.pkg.root, newestSchemaMtime);
-
-  // delegate (camelCase) -> model, for call-site recognition
-  const delegateToModel = new Map<string, PrismaModel>();
-  for (const m of parsed.models) delegateToModel.set(lowerFirst(m.name), m);
+  const modelNames = closureModelNames;
+  const clientStale = computeClientStale(ctx.pkg.root, ctx.projectRoot, newestSchemaMtime);
 
   // ---- model + enum fragments ------------------------------------------
   for (const m of parsed.models) {
@@ -80,60 +197,6 @@ export function build(ctx: AdapterContext): void {
       refs: {},
       span: line(e.line),
       provenance: schemaProvenance,
-    });
-  }
-
-  // ---- model↔code bridge (prisma:access + prisma:raw) ------------------
-  const files = ctx.project.getSourceFiles().filter((sf) => ctx.inPackage(sf));
-  const clientTypes = clientTypeSet(files);
-  let accessSeq = 0;
-  let rawSeq = 0;
-
-  for (const sf of files) {
-    const fid = ctx.fileIdOf(sf);
-    sf.forEachDescendant((node) => {
-      // raw queries: tagged template `this.prisma.$queryRaw`...`` or *Unsafe(sql)
-      if (Node.isTaggedTemplateExpression(node)) {
-        const tag = node.getTag();
-        if (Node.isPropertyAccessExpression(tag) && RAW_TAGS[tag.getName()]) {
-          emitRaw(ctx, node, RAW_TAGS[tag.getName()], node.getTemplate().getText(), rawSeq++, fid);
-        }
-        return;
-      }
-      if (!Node.isCallExpression(node)) return;
-      const expr = node.getExpression();
-      if (!Node.isPropertyAccessExpression(expr)) return;
-      const op = expr.getName();
-
-      if (RAW_CALLS[op]) {
-        const arg = node.getArguments()[0];
-        emitRaw(ctx, node, RAW_CALLS[op], arg ? arg.getText() : "", rawSeq++, fid);
-        return;
-      }
-      if (!READ_OPS.has(op) && !WRITE_OPS.has(op)) return;
-      const delegateAccess = expr.getExpression();
-      if (!Node.isPropertyAccessExpression(delegateAccess)) return;
-      const model = delegateToModel.get(delegateAccess.getName());
-      if (!model) return;
-
-      const clientRecv = delegateAccess.getExpression();
-      const cls = node.getFirstAncestorByKind(SyntaxKind.ClassDeclaration);
-      const confidence = confidenceOf(clientRecv, cls, clientTypes);
-      const rw = READ_OPS.has(op) ? "read" : "write";
-      const fields = argFields(node.getArguments()[0], new Set(model.fields.map((f) => f.name)));
-      const caller = enclosingCallable(ctx, node);
-      const refs: FragmentNodeRecord["refs"] = {};
-      if (caller) refs.caller = caller;
-
-      ctx.store.upsertFragment({
-        id: `prisma:access:${caller ?? fid ?? "?"}#${accessSeq++}`,
-        adapter: "prisma",
-        kind: "access",
-        attrs: { model: model.name, modelNode: `prisma:model:${model.name}`, op, rw, fields, confidence },
-        refs,
-        span: spanOf(node),
-        provenance: fid ? [fid] : [],
-      });
     });
   }
 
@@ -195,7 +258,9 @@ function emitMigrations(ctx: AdapterContext): void {
 }
 
 function operationOf(stmt: string): string | null {
-  const m = stmt.match(/^\s*(?:--[^\n]*\n\s*)*(CREATE TABLE|CREATE UNIQUE INDEX|CREATE INDEX|CREATE TYPE|ALTER TABLE|DROP TABLE|DROP INDEX)/i);
+  const m = stmt.match(
+    /^\s*(?:--[^\n]*\n\s*)*(CREATE TABLE|CREATE UNIQUE INDEX|CREATE INDEX|CREATE TYPE|CREATE EXTENSION|CREATE SCHEMA|ALTER TABLE|ALTER TYPE|DROP TABLE|DROP INDEX|DROP TYPE)/i,
+  );
   return m ? m[1].toUpperCase() : null;
 }
 
@@ -388,12 +453,52 @@ function findSchemas(root: string): string[] {
   return existsSync(flat) ? [flat] : [];
 }
 
-function computeClientStale(root: string, schemaMtime: number): boolean {
-  for (const rel of ["node_modules/.prisma/client", "node_modules/@prisma/client"]) {
-    const p = join(root, rel);
-    if (existsSync(p)) return safeMtime(p) < schemaMtime;
+/** Is the generated Prisma client older than the schema? We stat the *actual
+ *  generated output* (`.prisma/client/index.d.ts`), never the `@prisma/client`
+ *  package directory — under pnpm the latter is a symlink into the store whose
+ *  mtime is the install time, not the `prisma generate` time (that gave a false
+ *  `clientStale` on every model). Indeterminate (can't resolve the output) →
+ *  `false`, so we never cry wolf. */
+export function computeClientStale(root: string, projectRoot: string, schemaMtime: number): boolean {
+  const generated = resolveGeneratedClient(root, projectRoot);
+  if (!generated) return false;
+  return safeMtime(generated) < schemaMtime;
+}
+
+/** Locate the generated client output file for a package, walking up to the
+ *  workspace root. Handles both the hoisted layout (`.prisma/client` directly
+ *  under a `node_modules`) and pnpm's symlinked `@prisma/client` (whose real
+ *  location has the generated `.prisma/client` as a sibling in the store). */
+function resolveGeneratedClient(root: string, projectRoot: string): string | null {
+  const outputs = [".prisma/client/index.d.ts", ".prisma/client/index.js"];
+  let dir = root;
+  for (;;) {
+    const nm = join(dir, "node_modules");
+    // Hoisted / co-located generated client.
+    for (const rel of outputs) {
+      const p = join(nm, rel);
+      if (existsSync(p)) return p;
+    }
+    // pnpm: `@prisma/client` is a symlink into the store; the generated
+    // `.prisma/client` sits next to it in the store's node_modules.
+    const link = join(nm, "@prisma", "client");
+    if (existsSync(link)) {
+      try {
+        const storeNm = dirname(dirname(realpathSync(link)));
+        for (const rel of outputs) {
+          const p = join(storeNm, rel);
+          if (existsSync(p)) return p;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    if (dir === projectRoot) break;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
-  return false; // no generated client → nothing to be stale
+  return null;
 }
 
 function safeMtime(p: string): number {
