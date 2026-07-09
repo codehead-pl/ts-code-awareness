@@ -1,6 +1,6 @@
 {
   "name": "@codehead-pl/tsca-adapter-prisma",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Prisma adapter: schema.prisma → models/relations/enums, the model↔code access bridge, and static migration reports, contributed as prisma:* fragments.",
   "author": "Michał Tomczuk",

@@ -1,6 +1,6 @@
 {
   "name": "@codehead-pl/tsca-live-data",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Optional, config-gated live-data tools. Opens the engine's own read-only DB connection (never boots the target app); SELECT-only guard + caps + timeout. Never mutates the target DB.",
   "author": "Michał Tomczuk",

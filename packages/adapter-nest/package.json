@@ -1,6 +1,6 @@
 {
   "name": "@codehead-pl/tsca-adapter-nest",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "NestJS adapter: DI graph, routes/controllers, and the guard/interceptor/pipe/filter pipeline, contributed as nest:* fragments.",
   "author": "Michał Tomczuk",

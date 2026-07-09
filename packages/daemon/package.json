@@ -1,6 +1,6 @@
 {
   "name": "@codehead-pl/tsca-daemon",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Shared multi-tenant HTTP daemon: routes each session to its project by X-Project-Root, keeps maps warm under an LRU.",
   "author": "Michał Tomczuk",
