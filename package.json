@@ -1,0 +1,59 @@
+{
+  "name": "ts-code-awareness",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Static-analysis knowledge base for TS/NestJS codebases, served to AI agents over MCP.",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r exec tsc --noEmit",
+    "smoke:core": "tsx --conditions=development packages/core/test/smoke.ts",
+    "smoke:graph": "tsx --conditions=development packages/core/test/graph-smoke.ts",
+    "test:tiers": "tsx --conditions=development packages/core/test/tiers.ts fixtures/nest-monorepo",
+    "test:nest": "tsx --conditions=development packages/adapter-nest/test/nest.ts",
+    "test:nest:runtime": "cd fixtures/nest-monorepo/packages/api && tsx --conditions=development ../../../../packages/adapter-nest/test/nest-runtime.e2e.ts",
+    "test:prisma": "tsx --conditions=development packages/adapter-prisma/test/prisma.ts",
+    "test:semantic": "tsx --conditions=development packages/adapter-nest/test/semantic.ts",
+    "test:live": "tsx --conditions=development packages/live-data/test/live.ts",
+    "test:diff": "tsx --conditions=development packages/core/test/differential.ts",
+    "test:persist": "tsx --conditions=development packages/core/test/persistence.ts",
+    "test:roles": "tsx --conditions=development packages/daemon/test/roles.ts",
+    "test:perf": "tsx --conditions=development packages/core/test/perf-smoke.ts",
+    "test:build": "tsx --conditions=development packages/daemon/test/dist-smoke.ts",
+    "daemon": "tsx --conditions=development packages/daemon/src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@huggingface/transformers@4.2.0": "patches/@huggingface__transformers@4.2.0.patch"
+    }
+  },
+  "license": "MIT",
+  "author": "Michał Tomczuk",
+  "homepage": "https://github.com/codehead-pl/ts-code-awareness#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codehead-pl/ts-code-awareness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codehead-pl/ts-code-awareness/issues"
+  },
+  "keywords": [
+    "mcp",
+    "claude-code",
+    "typescript",
+    "nestjs",
+    "prisma",
+    "static-analysis",
+    "code-navigation",
+    "ai-agents",
+    "monorepo"
+  ],
+  "engines": {
+    "node": ">=22.5"
+  }
+}

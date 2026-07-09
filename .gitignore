@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.tsca-cache/
+.nx/
+*.log
+.DS_Store
+.idea/
+CLAUDE.md

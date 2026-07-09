@@ -1,0 +1,22 @@
+{
+  "name": "@fixture/root",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Golden test fixture: nx/pnpm NestJS + Prisma monorepo for static analysis",
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "graph": "nx graph"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "nx": "^18.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

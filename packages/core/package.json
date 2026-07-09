@@ -1,0 +1,24 @@
+{
+  "name": "@tsca/core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Engine core: TS program walk, base map, SQLite store.",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "onnxruntime-web": "^1.27.0",
+    "ts-morph": "^24.0.0"
+  },
+  "license": "MIT",
+  "private": true
+}

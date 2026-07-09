@@ -1,0 +1,29 @@
+{
+  "name": "@tsca/live-data",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Optional, config-gated live-data tools. Opens the engine's own read-only DB connection (never boots the target app); SELECT-only guard + caps + timeout. Never mutates the target DB.",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@tsca/core": "workspace:*"
+  },
+  "optionalDependencies": {
+    "pg": "^8.13.1",
+    "mysql2": "^3.11.5"
+  },
+  "devDependencies": {
+    "@tsca/adapter-prisma": "workspace:*"
+  },
+  "license": "MIT",
+  "private": true
+}

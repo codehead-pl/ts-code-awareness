@@ -1,0 +1,14 @@
+{
+  "name": "@fixture/core",
+  "version": "0.0.1",
+  "description": "Shared library: repositories, base service, shared types",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "echo \"no tests\""
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

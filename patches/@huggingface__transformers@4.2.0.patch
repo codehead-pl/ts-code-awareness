@@ -1,0 +1,26 @@
+diff --git a/dist/transformers.node.cjs b/dist/transformers.node.cjs
+index 6cb09aecb7364f1b909fb6ceed8daff52bba345b..061bc9e230d3991c3c9efb63b6f9b847a44f7edc 100644
+--- a/dist/transformers.node.cjs
++++ b/dist/transformers.node.cjs
+@@ -12510,6 +12510,8 @@ var ONNX;
+ var ORT_SYMBOL = /* @__PURE__ */ Symbol.for("onnxruntime");
+ if (ORT_SYMBOL in globalThis) {
+   ONNX = globalThis[ORT_SYMBOL];
++  supportedDevices.push("wasm");
++  defaultDevices = ["wasm"];
+ } else if (apis.IS_NODE_ENV) {
+   ONNX = ONNX_NODE;
+   switch (process.platform) {
+diff --git a/dist/transformers.node.mjs b/dist/transformers.node.mjs
+index bacb354fe1b898d4c535a39f5ef1ba5c6a463d75..72dff68dd95c5deaa57bb5a642ee1a73e3c8064e 100644
+--- a/dist/transformers.node.mjs
++++ b/dist/transformers.node.mjs
+@@ -11550,6 +11550,8 @@ var ONNX;
+ var ORT_SYMBOL = /* @__PURE__ */ Symbol.for("onnxruntime");
+ if (ORT_SYMBOL in globalThis) {
+   ONNX = globalThis[ORT_SYMBOL];
++  supportedDevices.push("wasm");
++  defaultDevices = ["wasm"];
+ } else if (apis.IS_NODE_ENV) {
+   ONNX = ONNX_NODE;
+   switch (process.platform) {

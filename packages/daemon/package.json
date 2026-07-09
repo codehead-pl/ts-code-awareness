@@ -1,0 +1,20 @@
+{
+  "name": "@tsca/daemon",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared multi-tenant HTTP daemon: routes each session to its project by X-Project-Root, keeps maps warm under an LRU.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "dev": "tsx --conditions=development src/index.ts"
+  },
+  "dependencies": {
+    "@tsca/core": "workspace:*",
+    "@tsca/adapter-nest": "workspace:*",
+    "@tsca/adapter-prisma": "workspace:*",
+    "@tsca/live-data": "workspace:*"
+  },
+  "license": "MIT",
+  "private": true
+}

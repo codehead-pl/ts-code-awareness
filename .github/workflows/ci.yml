@@ -1,0 +1,106 @@
+# CI (docs/design/06-followup-plan.md W1). Codifies the exact commands the W1
+# author verified locally: install -> typecheck -> the five test suites ->
+# test:diff (differential correctness oracle) -> a perf smoke with a budget.
+#
+# Postgres + MySQL service containers are provisioned here for W8 (all-engine
+# live-data tests). test:live currently exercises only the in-process SQLite
+# driver; W8 wires it to these services via the TSCA_PG_URL / TSCA_MYSQL_URL
+# env vars already exported below, at which point no workflow change is needed.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tsca
+          POSTGRES_PASSWORD: tsca
+          POSTGRES_DB: tsca
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tsca"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: tsca
+          MYSQL_DATABASE: tsca
+          MYSQL_USER: tsca
+          MYSQL_PASSWORD: tsca
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -ptsca"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Consumed by W8's all-engine live-data suite; harmless until then.
+      TSCA_PG_URL: postgres://tsca:tsca@127.0.0.1:5432/tsca
+      TSCA_MYSQL_URL: mysql://tsca:tsca@127.0.0.1:3306/tsca
+      # Generous fixture-scale build-time budget; the ratchet, not a tight bound.
+      TSCA_PERF_BUDGET_MS: "60000"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 7
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # node:sqlite is stable (no flag) from Node 24 on; the engine uses it.
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build (compiled JS dist per package, W11)
+        run: pnpm build
+
+      - name: test:tiers
+        run: pnpm test:tiers
+
+      - name: test:nest
+        run: pnpm test:nest
+
+      - name: test:prisma
+        run: pnpm test:prisma
+
+      - name: test:semantic
+        run: pnpm test:semantic
+
+      - name: test:live
+        run: pnpm test:live
+
+      - name: test:diff (differential correctness oracle)
+        run: pnpm test:diff
+
+      - name: test:persist (on-disk map survives close/reopen)
+        run: pnpm test:persist
+
+      - name: perf smoke (build-time budget)
+        run: pnpm test:perf
+
+      - name: test:build (daemon served from compiled dist, W11)
+        run: pnpm test:build

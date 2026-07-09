@@ -1,0 +1,4 @@
+packages:
+  - 'packages/*'
+# fixtures/ is intentionally excluded — it holds sample target projects the
+# engine analyzes, not workspace packages.
