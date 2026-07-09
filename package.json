@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Static-analysis knowledge base for TS/NestJS codebases, served to AI agents over MCP.",
+  "packageManager": "pnpm@11.10.0",
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r exec tsc --noEmit",
