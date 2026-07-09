@@ -23,7 +23,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepublishOnly": "tsup"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

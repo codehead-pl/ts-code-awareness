@@ -27,7 +27,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepublishOnly": "tsup"
   },
   "dependencies": {
     "@codehead-pl/tsca-core": "workspace:*",

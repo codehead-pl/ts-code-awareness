@@ -27,7 +27,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepublishOnly": "tsup"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",

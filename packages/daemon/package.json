@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "tsup",
     "start": "node dist/index.js",
     "dev": "tsx --conditions=development src/index.ts"
   },
