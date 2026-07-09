@@ -2,3 +2,21 @@ packages:
   - 'packages/*'
 # fixtures/ is intentionally excluded — it holds sample target projects the
 # engine analyzes, not workspace packages.
+
+# pnpm v11 blocks dependency build (install) scripts by default and treats
+# undecided ones as an error. We explicitly decide each: esbuild (tsup's bundler)
+# is the only one we need. onnxruntime-node is intentionally NOT built — the
+# engine runs ONNX over WASM (onnxruntime-web) and stubs the native binding;
+# sharp and protobufjs aren't on the text-embedding path.
+allowBuilds:
+  esbuild: true
+  onnxruntime-node: false
+  protobufjs: false
+  sharp: false
+
+# Moved here from the root package.json "pnpm" field, which pnpm v11 no longer
+# reads. This dev-patch teaches transformers' backend selector about the injected
+# onnxruntime-web (WASM) runtime; npm/npx consumers get the same fix at runtime
+# via core's ensureTransformersWasmPatch (packages/core/src/onnx.ts).
+patchedDependencies:
+  '@huggingface/transformers@4.2.0': patches/@huggingface__transformers@4.2.0.patch

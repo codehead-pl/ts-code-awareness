@@ -27,11 +27,6 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
-  "pnpm": {
-    "patchedDependencies": {
-      "@huggingface/transformers@4.2.0": "patches/@huggingface__transformers@4.2.0.patch"
-    }
-  },
   "license": "MIT",
   "author": "Michał Tomczuk",
   "homepage": "https://github.com/codehead-pl/ts-code-awareness#readme",
