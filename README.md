@@ -121,6 +121,11 @@ pnpm build
 **Requirements:** Node ≥ 22.5 (uses built-in `node:sqlite` — no native modules).
 Dev runs TypeScript directly via `tsx`; `pnpm build` compiles with `tsup`.
 
+## Roadmap
+
+Where it's headed — more framework and database adapters, cross-cutting bridges,
+and a community adapter SDK — is in [`ROADMAP.md`](ROADMAP.md).
+
 ## License
 
 [MIT](LICENSE) © Michał Tomczuk
